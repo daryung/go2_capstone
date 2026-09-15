@@ -1,0 +1,1 @@
+cd /mnt/c/Users/SAMSUNG/Desktop/go2_capstone
