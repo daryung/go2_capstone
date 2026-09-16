@@ -1,5 +1,4 @@
 import math
-
 from unitree_webrtc_connect.constants import RTC_TOPIC
 
 
@@ -10,15 +9,16 @@ class Go2Localization:
         self.conn = connection
 
         self.command_topic = RTC_TOPIC["LIDAR_MAPPING_CMD"]
-
-        # unitree_webrtc_connect constants에 이름이 없을 경우를 대비해
-        # 실제 USLAM topic을 직접 사용한다.
         self.odom_topic = "rt/uslam/localization/odom"
 
         self.x = None
         self.y = None
         self.z = None
         self.yaw = None
+
+    # =====================================================
+    # Command
+    # =====================================================
 
     def _send_command(self, command: str):
         print(f"[LOC CMD] {command}")
@@ -28,7 +28,17 @@ class Go2Localization:
             command,
         )
 
+    # =====================================================
+    # Localization 명령
+    # =====================================================
+
     def start(self):
+        # 이전 localization에서 남아 있던 pose 제거
+        self.x = None
+        self.y = None
+        self.z = None
+        self.yaw = None
+
         self._send_command("localization/start")
 
     def stop(self):
@@ -36,6 +46,28 @@ class Go2Localization:
 
     def get_status(self):
         self._send_command("localization/get_status")
+
+    def set_initial_pose(
+        self,
+        x: float,
+        y: float,
+        yaw: float,
+    ):
+        """
+        기존 지도에서 로봇의 초기 위치 지정.
+        UI의 Set Initial Pose와 동일한 명령.
+        """
+
+        command = (
+            f"localization/set_initial_pose/"
+            f"{x:.3f}/{y:.3f}/{yaw:.3f}"
+        )
+
+        self._send_command(command)
+
+    # =====================================================
+    # Pose 수신
+    # =====================================================
 
     def subscribe_pose(self):
         self.conn.datachannel.pub_sub.subscribe(
@@ -77,7 +109,14 @@ class Go2Localization:
             )
 
         except (KeyError, TypeError, ValueError):
-            print("[LOC] Unknown odometry format:", data)
+            print(
+                "[LOC] Unknown odometry format:",
+                data,
+            )
+
+    # =====================================================
+    # 현재 Pose
+    # =====================================================
 
     def get_pose(self):
         if self.x is None:
