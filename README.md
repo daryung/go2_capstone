@@ -9,6 +9,6 @@ python3 -m venv .venv
 source .venv/bin/activate
 ./start.sh
 
-export GO2_AES_KEY='dabb463013ed140250ebae67bfcfe9ca'
+'dabb463013ed140250ebae67bfcfe9ca'
 
 
