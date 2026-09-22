@@ -16,10 +16,6 @@ class Go2Localization:
         self.z = None
         self.yaw = None
 
-    # =====================================================
-    # Command
-    # =====================================================
-
     def _send_command(self, command: str):
         print(f"[LOC CMD] {command}")
 
@@ -28,12 +24,7 @@ class Go2Localization:
             command,
         )
 
-    # =====================================================
-    # Localization 명령
-    # =====================================================
-
     def start(self):
-        # 이전 localization에서 남아 있던 pose 제거
         self.x = None
         self.y = None
         self.z = None
@@ -65,9 +56,6 @@ class Go2Localization:
 
         self._send_command(command)
 
-    # =====================================================
-    # Pose 수신
-    # =====================================================
 
     def subscribe_pose(self):
         self.conn.datachannel.pub_sub.subscribe(
@@ -114,9 +102,6 @@ class Go2Localization:
                 data,
             )
 
-    # =====================================================
-    # 현재 Pose
-    # =====================================================
 
     def get_pose(self):
         if self.x is None:

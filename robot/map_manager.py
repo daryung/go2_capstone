@@ -15,9 +15,7 @@ class Go2MapManager:
         self.pub_sub = connection.datachannel.pub_sub
         self.command_topic = RTC_TOPIC["LIDAR_MAPPING_CMD"]
 
-    # -------------------------------------------------
-    # USLAM command
-    # -------------------------------------------------
+
     def _send_command(self, command: str):
         print(f"[MAP CMD] {command}")
 
@@ -26,9 +24,6 @@ class Go2MapManager:
             command,
         )
 
-    # -------------------------------------------------
-    # UUID
-    # -------------------------------------------------
     def _generate_upload_uuid(self, chunk_index: int):
         value = (
             int(time.time() * 1000) % (2 ** 31)
@@ -37,9 +32,7 @@ class Go2MapManager:
 
         return f"upload_req_{value}_{chunk_index}"
 
-    # -------------------------------------------------
-    # Upload one file
-    # -------------------------------------------------
+
     async def upload_file(
         self,
         local_path: str,
@@ -81,9 +74,7 @@ class Go2MapManager:
             f"{total_chunks} chunks"
         )
 
-        # ---------------------------------------------
-        # Send chunks sequentially
-        # ---------------------------------------------
+
         for index, chunk in enumerate(chunks):
 
             # UI/APK 동작과 동일하게
@@ -113,8 +104,7 @@ class Go2MapManager:
             }
 
             try:
-                # ★ 중요
-                # 실제 로봇 응답을 await
+                #publish()는 비동기 함수이므로 반드시 await로 호출해야 함
                 response = await asyncio.wait_for(
                     self.pub_sub.publish(
                         "",
@@ -133,9 +123,6 @@ class Go2MapManager:
                     f"{total_chunks} ACK timeout"
                 )
 
-            # -----------------------------------------
-            # Check robot ACK
-            # -----------------------------------------
             info = (
                 response.get("info", {})
                 if isinstance(response, dict)
@@ -168,9 +155,6 @@ class Go2MapManager:
             f"UPLOAD COMPLETE"
         )
 
-    # -------------------------------------------------
-    # Upload complete map
-    # -------------------------------------------------
     async def upload_map(
         self,
         pcd_path: str,
@@ -200,9 +184,6 @@ class Go2MapManager:
 
         print("\n[MAP] All map files uploaded.")
 
-    # -------------------------------------------------
-    # Activate map
-    # -------------------------------------------------
     async def activate_map(
         self,
         map_id: str,
@@ -215,5 +196,4 @@ class Go2MapManager:
             f"common/set_map_id/{map_id}"
         )
 
-        # set_map_id 처리 시간
         await asyncio.sleep(1.0)

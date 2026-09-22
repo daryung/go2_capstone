@@ -20,9 +20,6 @@ class Go2Navigation:
 
         self.state = "IDLE"
 
-    # =====================================================
-    # Command
-    # =====================================================
 
     def _send_command(self, command: str):
         print(f"[NAV CMD] {command}")
@@ -32,9 +29,6 @@ class Go2Navigation:
             command,
         )
 
-    # =====================================================
-    # USLAM Server Log
-    # =====================================================
 
     def subscribe_server_log(self):
         def callback(message):
@@ -55,9 +49,7 @@ class Go2Navigation:
         if not isinstance(data, str):
             return
 
-        # =================================================
-        # Localization
-        # =================================================
+
 
         if "[Localization] initialization succeed!" in data:
             print("[LOC STATE] LOCALIZATION_READY")
@@ -67,9 +59,7 @@ class Go2Navigation:
             # Localization 메시지는 여기까지만 처리
             return
 
-        # =================================================
-        # Navigation
-        # =================================================
+
 
         if "navigation/state_transition/REACHED" in data:
             self.state = "GOAL_REACHED"
@@ -109,9 +99,6 @@ class Go2Navigation:
 
             print("[NAV STATE] WAITING")
 
-        # ---------------------------------------------
-        # Sensor timeout은 Navigation 실패로 처리하지 않음
-        # ---------------------------------------------
 
         elif "navigation/state_transition/TIMEOUT_POINTCLOUD" in data:
             print("[NAV WARNING] POINTCLOUD_TIMEOUT")
@@ -132,9 +119,6 @@ class Go2Navigation:
 
             print("[NAV STATE] ABNORMAL")
 
-    # =====================================================
-    # Localization wait
-    # =====================================================
 
     def reset_localization_event(self):
         self.localization_ready.clear()
@@ -165,9 +149,6 @@ class Go2Navigation:
 
             return False
 
-    # =====================================================
-    # Navigation
-    # =====================================================
 
     def start(self):
         self._send_command("navigation/start")
