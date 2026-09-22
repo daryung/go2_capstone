@@ -14,6 +14,9 @@ MODEL_PATH = "yolo11n.pt"
 
 CONFIDENCE = 0.4
 
+# 찾을 물건 카테고리 (COCO class)
+TARGET_CLASS = "refrigerator"
+
 #종료 q
 
 
@@ -49,31 +52,65 @@ async def video_callback(track):
             result = results[0]
 
 
+            # -------------------------------------------------
+            # 하드코딩된 목표물(refrigerator) 탐지 상태 계산
+            # -------------------------------------------------
+            target_count = 0
+            target_confidences = []
+
             if result.boxes is not None:
-
-                detected_objects = []
-
                 for box in result.boxes:
-
                     class_id = int(box.cls[0])
                     confidence = float(box.conf[0])
-
                     class_name = model.names[class_id]
 
-                    detected_objects.append(
-                        f"{class_name} {confidence:.2f}"
-                    )
+                    if class_name == TARGET_CLASS:
+                        target_count += 1
+                        target_confidences.append(confidence)
 
-                if detected_objects:
-
-                    print(
-                        "[DETECTED]",
-                        ", ".join(detected_objects)
-                    )
-
-
+            if target_count > 0:
+                target_status = "FOUND"
+                status_text = f"FOUND | refrigerator count: {target_count}"
+                print(
+                    f"\r[TARGET] status={target_status} | "
+                    f"category={TARGET_CLASS} | count={target_count}",
+                    end="",
+                    flush=True,
+                )
+            else:
+                target_status = "NOT_FOUND"
+                status_text = "NOT_FOUND | refrigerator count: 0"
+                print(
+                    f"\r[TARGET] status={target_status} | "
+                    f"category={TARGET_CLASS} | count=0",
+                    end="",
+                    flush=True,
+                )
 
             annotated_frame = result.plot()
+
+            # 영상 화면에도 상태값/개수 표시
+            cv2.putText(
+                annotated_frame,
+                f"TARGET: {TARGET_CLASS}",
+                (20, 35),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.8,
+                (255, 255, 255),
+                2,
+                cv2.LINE_AA,
+            )
+
+            cv2.putText(
+                annotated_frame,
+                status_text,
+                (20, 70),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.8,
+                (255, 255, 255),
+                2,
+                cv2.LINE_AA,
+            )
 
 
             cv2.imshow(

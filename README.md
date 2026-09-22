@@ -4,6 +4,7 @@ cd "/mnt/c/Users/SAMSUNG/OneDrive/바탕 화면/go2_capstone"
 export GO2_AES_KEY="dabb463013ed140250ebae67bfcfe9ca"
 python main.py
 python vision.py
+python rotation_test.py
 
 cd ~/unitree_ui
 python3 -m venv .venv
