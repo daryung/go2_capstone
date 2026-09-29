@@ -1,0 +1,11 @@
+{
+  "point_id": "B",
+  "robot_x": 0.52,
+  "robot_y": 1.21,
+  "robot_yaw": 1.57,
+  "navigation_state": "REACHED",
+  "starfish_count": 0,
+  "starfish_confidence": 0.38,
+  "shell_count": 1,
+  "shell_confidence": 0.42
+}

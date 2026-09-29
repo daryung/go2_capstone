@@ -14,7 +14,6 @@ MODEL_PATH = "yolo11n.pt"
 
 CONFIDENCE = 0.4
 
-# 찾을 물건 카테고리 (COCO class)
 TARGET_CLASS = "refrigerator"
 
 #종료 q

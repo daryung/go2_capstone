@@ -11,9 +11,14 @@ python3 -m venv .venv
 source .venv/bin/activate
 ./start.sh
 
+DELETE FROM observations;
+DELETE FROM sqlite_sequence WHERE name = 'observations';
+
 
 dabb463013ed140250ebae67bfcfe9ca
 192.168.0.101
+
+py -m tests.memory_llm_test
 
 
 
