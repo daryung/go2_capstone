@@ -17,12 +17,6 @@ class Go2Rotation:
         )
 
     async def rotate(self, degrees, yaw_speed=0.3, tolerance_deg=3.0):
-        """
-        현재 위치에서 지정한 각도만큼 회전.
-
-        degrees > 0 : 한쪽 방향
-        degrees < 0 : 반대 방향
-        """
 
         pose = self.localization.get_pose()
 

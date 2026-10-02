@@ -20,6 +20,10 @@ dabb463013ed140250ebae67bfcfe9ca
 
 py -m tests.memory_llm_test
 
+py -m bridge.robot_sender
+
+python -m bridge.agent_receiver.py
+
 
 
 
