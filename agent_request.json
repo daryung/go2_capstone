@@ -1,0 +1,9 @@
+{
+  "type": "MISSION_COMPLETED",
+  "patrol_count": 2,
+  "route": [
+    "P1_MAIN",
+    "P1_SIDE",
+    "P2_MAIN"
+  ]
+}
