@@ -5,8 +5,9 @@ export GO2_AES_KEY="dabb463013ed140250ebae67bfcfe9ca"
 python main.py
 python vision.py
 python rotation_test.py
-python main2.py
-python main3.py
+python main5.py
+
+
 
 cd ~/unitree_ui
 python3 -m venv .venv

@@ -1,9 +1,11 @@
 import asyncio
+from datetime import datetime
 
 from robot.connection import Go2Connection
 from robot.navigation import Go2Navigation
 from robot.localization import Go2Localization
 from robot.map_manager import Go2MapManager
+from memory.observation_memory import save_observation
 
 
 MAP_ID = "ueNNgwm6wbiqCBgPHwqXGw"
@@ -11,6 +13,7 @@ MAP_ID = "ueNNgwm6wbiqCBgPHwqXGw"
 INITIAL_POSE = (0.013, 0.023, 0.000)
 
 WAYPOINTS = {
+    "HOME": INITIAL_POSE,
     "P1_MAIN": (2.399, -1.307, 0.000),
     "P1_SIDE": (3.272, -2.408, 1.906),
     "P2_MAIN": (2.262, -2.908, -2.946),
@@ -21,6 +24,107 @@ ROUTE = [
     "P1_SIDE",
     "P2_MAIN",
 ]
+
+PATROL_COUNT = 2
+
+# 목적지 도착 후 로봇이 안정될 때까지 기다리는 시간
+OBSERVATION_DELAY = 2.0
+
+
+def make_robot_observation(
+    point_name,
+    patrol,
+    localization,
+    navigation,
+):
+    """
+    현재 로봇의 최신 상태를 하나의 Observation Snapshot으로 생성.
+    """
+
+    pose = localization.get_pose()
+
+    if pose is None:
+        return None
+
+    observation = {
+        "timestamp": datetime.now().isoformat(timespec="seconds"),
+        "patrol": patrol,
+        "point_id": point_name,
+
+        "robot_x": pose["x"],
+        "robot_y": pose["y"],
+        "robot_z": pose["z"],
+        "robot_yaw": pose["yaw"],
+
+        "navigation_state": navigation.state,
+    }
+
+    return observation
+
+
+def print_observation(observation):
+    """Observation Snapshot 확인용 출력."""
+
+    print("\n--------------------------------------")
+    print("[OBSERVATION SNAPSHOT]")
+    print("--------------------------------------")
+
+    print(f"time       : {observation['timestamp']}")
+    print(f"patrol     : {observation['patrol']}")
+    print(f"point_id   : {observation['point_id']}")
+
+    print(
+        f"position   : "
+        f"x={observation['robot_x']:.3f}, "
+        f"y={observation['robot_y']:.3f}, "
+        f"z={observation['robot_z']:.3f}"
+    )
+
+    print(
+        f"yaw        : "
+        f"{observation['robot_yaw']:.3f}"
+    )
+
+    print(
+        f"nav_state  : "
+        f"{observation['navigation_state']}"
+    )
+
+    print("--------------------------------------")
+
+
+
+def save_robot_observation(observation):
+    """
+    현재 로봇 관측정보를 Observation Memory에 저장.
+    Vision 연결 전에는 생물 탐지값을 임시로 0으로 저장한다.
+    """
+
+    try:
+        observation_id = save_observation(
+            point_id=observation["point_id"],
+            robot_x=observation["robot_x"],
+            robot_y=observation["robot_y"],
+            robot_yaw=observation["robot_yaw"],
+            navigation_state=observation["navigation_state"],
+
+            # Vision 연결 전 임시값
+            starfish_count=0,
+            starfish_confidence=0.0,
+            shell_count=0,
+            shell_confidence=0.0,
+        )
+
+        print(
+            f"[MEMORY] Observation saved successfully. "
+            f"ID={observation_id}"
+        )
+
+        return observation_id
+
+    except Exception as e:
+        print(f"[MEMORY ERROR] Failed to save observation: {e}")
+        return None
 
 
 async def main():
@@ -105,78 +209,186 @@ async def main():
 
     print("\n==============================")
     print("[MISSION] Waypoint patrol start")
+    print(f"[MISSION] Total patrols: {PATROL_COUNT}")
     print("==============================")
 
-    for index, point_name in enumerate(ROUTE, start=1):
+    for patrol in range(1, PATROL_COUNT + 1):
 
-        target = WAYPOINTS[point_name]
-
-        print("\n==============================")
+        print("\n======================================")
         print(
-            f"[MISSION] {index}/{len(ROUTE)} "
-            f"Moving to {point_name}"
+            f"[MISSION] PATROL "
+            f"{patrol}/{PATROL_COUNT} START"
         )
+        print("======================================")
+
+        for index, point_name in enumerate(
+            ROUTE,
+            start=1,
+        ):
+
+            target = WAYPOINTS[point_name]
+
+            print("\n==============================")
+
+            print(
+                f"[MISSION] PATROL "
+                f"{patrol}/{PATROL_COUNT} | "
+                f"{index}/{len(ROUTE)}"
+            )
+
+            print(
+                f"[MISSION] Moving to "
+                f"{point_name}"
+            )
+
+            print(
+                f"[TARGET] "
+                f"x={target[0]:.3f}, "
+                f"y={target[1]:.3f}, "
+                f"yaw={target[2]:.3f}"
+            )
+
+            print("==============================")
+
+            # ---------------------------------------------
+            # Navigation
+            # ---------------------------------------------
+
+            success = await navigation.goto_and_wait(
+                *target,
+                timeout=60.0,
+            )
+
+            if not success:
+
+                print("\n==============================")
+                print("[MISSION] PATROL FAILED")
+
+                print(
+                    f"[MISSION] Patrol: "
+                    f"{patrol}/{PATROL_COUNT}"
+                )
+
+                print(
+                    f"[MISSION] Point: "
+                    f"{point_name}"
+                )
+
+                print(
+                    f"[MISSION] Reason: "
+                    f"{navigation.state}"
+                )
+
+                print("==============================")
+
+                return
+
+            print(
+                f"[MISSION] Arrived at "
+                f"{point_name}."
+            )
+
+            # =================================================
+            # 6. Observation
+            # =================================================
+
+            print(
+                f"[OBSERVATION] Waiting "
+                f"{OBSERVATION_DELAY:.1f}s "
+                f"for robot stabilization..."
+            )
+
+            await asyncio.sleep(
+                OBSERVATION_DELAY
+            )
+
+            observation = make_robot_observation(
+                point_name=point_name,
+                patrol=patrol,
+                localization=localization,
+                navigation=navigation,
+            )
+
+            if observation is None:
+
+                print(
+                    f"[WARNING] Pose unavailable "
+                    f"at {point_name}."
+                )
+
+            else:
+
+                # ---------------------------------------------
+                # 화면 출력
+                # ---------------------------------------------
+
+                print_observation(
+                    observation
+                )
+
+                # ---------------------------------------------
+                # Observation Memory 저장
+                # ---------------------------------------------
+
+                try:
+
+                    save_robot_observation(
+                        observation
+                    )
+
+                except Exception as e:
+
+                    print(
+                        f"[MEMORY ERROR] "
+                        f"Failed to save observation: {e}"
+                    )
+
+            # 다음 목적지 이동 전 잠시 대기
+            await asyncio.sleep(1.0)
+
+        # =================================================
+        # Patrol completed
+        # =================================================
+
+        print("\n======================================")
+
         print(
-            f"[TARGET] "
-            f"x={target[0]:.3f}, "
-            f"y={target[1]:.3f}, "
-            f"yaw={target[2]:.3f}"
-        )
-        print("==============================")
-
-        success = await navigation.goto_and_wait(
-            *target,
-            timeout=60.0,
+            f"[MISSION] PATROL "
+            f"{patrol}/{PATROL_COUNT} COMPLETED"
         )
 
-        if not success:
+        print("======================================")
+
+        if patrol < PATROL_COUNT:
+
             print(
-                f"[MISSION] Failed to reach {point_name}. "
-                f"Reason: {navigation.state}"
-            )
-            return
-
-        print(f"[MISSION] Arrived at {point_name}.")
-
-        # 도착 직후 localization 값 안정화
-        await asyncio.sleep(1.0)
-
-        pose = localization.get_pose()
-
-        if pose is not None:
-            print(
-                f"[POSE @ {point_name}] "
-                f"x={pose['x']:.3f}, "
-                f"y={pose['y']:.3f}, "
-                f"z={pose['z']:.3f}, "
-                f"yaw={pose['yaw']:.3f}"
-            )
-        else:
-            print(
-                f"[WARNING] Pose unavailable "
-                f"at {point_name}."
+                "[MISSION] Starting "
+                "next patrol: "
+                "P2_MAIN -> P1_MAIN"
             )
 
-        # 다음 지점 이동 전 잠시 대기
-        await asyncio.sleep(2.0)
+            await asyncio.sleep(2.0)
 
     # =====================================================
-    # 6. Patrol completed
+    # 7. All patrols completed
     # =====================================================
 
-    print("\n==============================")
-    print("[MISSION] PATROL COMPLETED")
+    print("\n======================================")
+    print("[MISSION] ALL PATROLS COMPLETED")
+
     print(
-        "P1_MAIN -> P1_SIDE -> P2_MAIN"
+        "P1_MAIN -> P1_SIDE -> "
+        "P2_MAIN x 2"
     )
-    print("==============================")
+
+    print("======================================")
 
     final_pose = localization.get_pose()
 
     if final_pose is not None:
         print("[FINAL POSE]", final_pose)
 
-    # 프로그램 유지
+    # 연결 유지
     while True:
         await asyncio.sleep(1)
 

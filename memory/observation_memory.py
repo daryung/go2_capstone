@@ -17,10 +17,10 @@ def save_observation(
     robot_y,
     robot_yaw,
     navigation_state,
-    starfish_count,
-    starfish_confidence,
-    shell_count,
-    shell_confidence
+    starfish_count=None,
+    starfish_confidence=None,
+    shell_count=None,
+    shell_confidence=None
 ):
     """현재 관측 결과를 SQLite에 저장"""
 

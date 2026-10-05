@@ -3,14 +3,14 @@ from ultralytics import YOLO
 
 BASE_DIR = Path(__file__).resolve().parent
 
-MODEL_PATH = BASE_DIR / "best5.pt"
+MODEL_PATH = BASE_DIR / "best.pt"
 IMAGE_PATH = BASE_DIR / "seastar1.jpg"
 
 model = YOLO(str(MODEL_PATH))
 
 results = model.predict(
     source=str(IMAGE_PATH),
-    conf=0.05,
+    conf=0.20,
     save=True
 )
 
