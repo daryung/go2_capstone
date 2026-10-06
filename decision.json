@@ -1,0 +1,6 @@
+{
+  "situation": "OBSERVATION_ANOMALY",
+  "action": "REOBSERVE",
+  "target_point": "P1_MAIN",
+  "reason": "Observation at P1_MAIN shows a sharp drop in starfish count from 3 to 0 with significantly low confidence (0.38), whereas the previous observation had high confidence (0.91); this discrepancy suggests temporary detection failure rather than a real environmental change."
+}
