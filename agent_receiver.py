@@ -213,51 +213,11 @@ def validate_mission_observations(
 # LLM 입력 구성
 # =========================================================
 
-def prepare_llm_input(
-    observations
-):
-    """
-    기존 local_llm.py의 decide() 인터페이스를
-    그대로 사용한다.
-
-        decide(
-            current_observation,
-            history
-        )
-
-    따라서:
-
-        앞의 5개 → history
-        마지막 1개 → current_observation
-
-    으로 전달한다.
-
-    주의:
-    이것은 현재 local_llm.py와 호환하기 위한 구조이다.
-
-    이후 local_llm.py를 Mission 전체 판단 방식으로
-    수정하면 mission_observations 전체를 직접
-    전달하도록 변경할 수 있다.
-    """
-
+def prepare_llm_input(observations):
+    """Mission 전체 Observation을 시간순 그대로 LLM에 전달한다."""
     if not observations:
-
-        raise ValueError(
-            "No mission observations."
-        )
-
-    current_observation = (
-        observations[-1]
-    )
-
-    history = (
-        observations[:-1]
-    )
-
-    return (
-        current_observation,
-        history
-    )
+        raise ValueError("No mission observations.")
+    return observations
 
 
 # =========================================================
@@ -439,47 +399,20 @@ def main():
 
 
     # =====================================================
-    # 6. LLM 입력 생성
+    # 6. Mission-level LLM 입력 생성
     # =====================================================
 
     try:
-
-        (
-            current_observation,
-            history
-
-        ) = prepare_llm_input(
-            mission_observations
-        )
-
+        llm_observations = prepare_llm_input(mission_observations)
     except Exception as e:
-
-        print(
-            f"\n[AGENT ERROR] "
-            f"Failed to prepare LLM input: {e}"
-        )
-
+        print(f"\n[AGENT ERROR] Failed to prepare LLM input: {e}")
         return
-
 
     print("\n===================================")
     print(" LLM INPUT")
     print("===================================")
-
-    print(
-        f"History observations : "
-        f"{len(history)}"
-    )
-
-    print(
-        f"Current observation  : "
-        f"{current_observation['point_id']}"
-    )
-
-    print(
-        f"Current ID           : "
-        f"{current_observation['id']}"
-    )
+    print(f"Mission observations : {len(llm_observations)}")
+    print("Mode                 : FULL MISSION COMPARISON")
 
 
     # =====================================================
@@ -500,12 +433,7 @@ def main():
     try:
 
         decision = decide(
-
-            current_observation=
-                current_observation,
-
-            history=
-                history
+            mission_observations=llm_observations
         )
 
     except Exception as e:
