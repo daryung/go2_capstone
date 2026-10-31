@@ -2,10 +2,11 @@ wsl
 source ~/go2_capstone/.venv/bin/activate
 cd "/mnt/c/Users/SAMSUNG/OneDrive/바탕 화면/go2_capstone"
 export GO2_AES_KEY="dabb463013ed140250ebae67bfcfe9ca"
-python main.py
-python vision.py
-python rotation_test.py
-python main5.py
+cd go2_manual
+python manual_control.py --live --ip 192.168.0.101
+
+export K9_OLLAMA_URL="http://$WIN_HOST_IP:11434"
+python app.py
 
 
 

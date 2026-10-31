@@ -1,0 +1,5 @@
+# unitree_webrtc_connect: keep your existing working installation.
+# If installing into a NEW environment, install that driver separately.
+numpy
+opencv-python
+ultralytics
